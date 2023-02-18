@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+}
+
+group 'com.goecfx.security.sonarqube'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+
+    implementation group: 'com.konghq', name: 'unirest-java', version: '4.0.0-RC2'
+    implementation group: 'com.konghq', name: 'unirest-object-mappers-gson', version: '4.0.0-RC2'
+    implementation group: 'com.konghq', name: 'unirest-objectmapper-jackson', version: '4.0.0-RC2'
+
+    compileOnly 'org.projectlombok:lombok:1.18.26'
+    annotationProcessor 'org.projectlombok:lombok:1.18.26'
+}
+
+test {
+    useJUnitPlatform()
+}
