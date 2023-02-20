@@ -11,20 +11,14 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 public class ProjectScanner {
-    /** "YWRtaW46YWRtaW4"= = admin:admin */
-    public static String authHeaderValue = "Basic YWRtaW46YWRtaW4=";
-
-    public static String projectName = "security";
-    public static String projectKey = "security-project-key";
-
-    private static void orchestrateScanning(String initialPath) {
+    private static void orchestrateScanning(String initialPath, String projectName, String projectKey) {
         // Create the project
 
         JsonResponse createProjectResponse =
                 (JsonResponse)
                         Unirest.post("http://localhost:9000/api/projects/create")
                                 .header("Content-Type", "application/x-www-form-urlencoded")
-                                .header("Authorization", authHeaderValue)
+                                .header("Authorization", ProjectScannerConstants.AUTHENTICATION_HEADER_VALUE)
                                 .body("name=" + projectName + "&project=" + projectKey)
                                 .asJson();
 
@@ -36,7 +30,7 @@ public class ProjectScanner {
         JsonResponse getProjectsResponse =
                 (JsonResponse)
                         Unirest.get("http://localhost:9000/api/projects/search")
-                                .header("Authorization", authHeaderValue)
+                                .header("Authorization", ProjectScannerConstants.AUTHENTICATION_HEADER_VALUE)
                                 .asJson();
 
         int getProjectsResponseCode = getProjectsResponse.getStatus();
@@ -48,7 +42,7 @@ public class ProjectScanner {
                 (JsonResponse)
                         Unirest.post("http://localhost:9000/api/user_tokens/generate")
                                 .header("Content-Type", "application/x-www-form-urlencoded")
-                                .header("Authorization", authHeaderValue)
+                                .header("Authorization", ProjectScannerConstants.AUTHENTICATION_HEADER_VALUE)
                                 .body("name=admin-access-token")
                                 .asJson();
 
@@ -58,7 +52,6 @@ public class ProjectScanner {
         JsonNode createAccessTokenResponseBody = createAccessTokenResponse.getBody();
 
         String token = createAccessTokenResponseBody.getObject().get("token").toString();
-        System.out.println("token = " + token);
 
         try {
             FileWriter variables = new FileWriter(initialPath + "/" + "sq_variables.config");
@@ -151,12 +144,12 @@ public class ProjectScanner {
         ProjectScanner.writeCsv(listOfIssues, severity, initialPath);
     }
 
-    private static void parseReport(String severity, String initialPath) {
+    private static void parseReport(String severity, String initialPath, String projectKey) {
         JsonResponse issuesSearchResponse =
                 (JsonResponse)
                         Unirest.get("http://localhost:9000/api/issues/search")
                                 .header("Content-Type", "application/x-www-form-urlencoded")
-                                .header("Authorization", authHeaderValue)
+                                .header("Authorization", ProjectScannerConstants.AUTHENTICATION_HEADER_VALUE)
                                 .queryString("project", projectKey)
                                 .queryString("severities", severity)
                                 .asJson();
@@ -173,27 +166,28 @@ public class ProjectScanner {
 
     public static void main(String[] args) {
         String mode = "";
-
-        if (args.length > 0) {
-            mode = args[0];
-        }
-
         String initialPath = "";
+        String projectName = "";
+        String projectKey = "";
 
-        if (args.length > 1) {
-            initialPath = args[1];
+        mode = args.length > 0 ? args[0] : "";
+        initialPath = args.length > 1 ? args[1] : "";
+
+        if (mode.equals(ProjectScannerConstants.ORCHESTRATE_SCANNING_MODE)) {
+            projectName = args.length > 2 ? args[2] : "";
+            projectKey = args.length > 3 ? args[3] : "";
+
+            ProjectScanner.orchestrateScanning(initialPath, projectName, projectKey);
         }
 
-        if (mode.equals("orchestrateScanning")) {
-            ProjectScanner.orchestrateScanning(initialPath);
-        }
+        if (mode.equals(ProjectScannerConstants.PARSE_REPORT_MODE)) {
+            projectKey = args.length > 2 ? args[2] : "";
 
-        if (mode.equals("parseReport")) {
-            ProjectScanner.parseReport("BLOCKER", initialPath);
-            ProjectScanner.parseReport("CRITICAL", initialPath);
-            ProjectScanner.parseReport("MAJOR", initialPath);
-            ProjectScanner.parseReport("MINOR", initialPath);
-            ProjectScanner.parseReport("INFO", initialPath);
+            ProjectScanner.parseReport("BLOCKER", initialPath, projectKey);
+            ProjectScanner.parseReport("CRITICAL", initialPath, projectKey);
+            ProjectScanner.parseReport("MAJOR", initialPath, projectKey);
+            ProjectScanner.parseReport("MINOR", initialPath, projectKey);
+            ProjectScanner.parseReport("INFO", initialPath, projectKey);
         }
     }
 }

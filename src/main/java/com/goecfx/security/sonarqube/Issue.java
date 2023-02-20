@@ -10,7 +10,6 @@ import java.util.stream.Stream;
  */
 @Data
 public class Issue {
-
     private String key;
     private String rule;
     private String severity;
