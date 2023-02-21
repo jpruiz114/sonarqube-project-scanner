@@ -66,31 +66,31 @@ public class ProjectScanner {
         }
     }
 
-    private static void writeCsv(ArrayList<Issue> listOfIssues, String severity, String initialPath) {
+    private static void writeIssuesCsv(ArrayList<Issue> listOfIssues, String severity, String initialPath) {
         try {
             FileWriter csvFileWriter = new FileWriter(initialPath + "/reports/" + severity + ".csv");
 
             String[] csvHeaders = {
-                    "key",
-                    "rule",
-                    "severity",
-                    "component",
-                    "project",
-                    "line",
-                    "hash",
-                    "textRange_startLine",
-                    "textRange_endLine",
-                    "textRange_startOffset",
-                    "textRange_endOffset",
-                    "status",
-                    "message",
-                    "effort",
-                    "debt",
-                    "author",
-                    "creationDate",
-                    "updateDate",
-                    "type",
-                    "scope"
+                "key",
+                "rule",
+                "severity",
+                "component",
+                "project",
+                "line",
+                "hash",
+                "textRange_startLine",
+                "textRange_endLine",
+                "textRange_startOffset",
+                "textRange_endOffset",
+                "status",
+                "message",
+                "effort",
+                "debt",
+                "author",
+                "creationDate",
+                "updateDate",
+                "type",
+                "scope"
             };
 
             String csvHeaderLine = String.join(",", csvHeaders) + System.lineSeparator();
@@ -109,41 +109,103 @@ public class ProjectScanner {
         }
     }
 
-    private static void processJsonArrayOfIssues(
-            JSONArray issues, String severity, String initialPath) {
+    private static void processJsonArrayOfIssues(JSONArray issues, String severity, String initialPath) {
         ArrayList<Issue> listOfIssues = new ArrayList<>();
 
         issues.forEach(
-                issueNode -> {
-                    Issue issue = new Issue();
+            issueNode -> {
+                Issue issue = new Issue();
 
-                    JSONObject jsonObject = (JSONObject) issueNode;
+                JSONObject jsonObject = (JSONObject) issueNode;
 
-                    issue.setKey(jsonObject.optString("key"));
-                    issue.setRule(jsonObject.optString("rule"));
-                    issue.setSeverity(jsonObject.optString("severity"));
-                    issue.setComponent(jsonObject.optString("component"));
-                    issue.setProject(jsonObject.optString("project"));
-                    issue.setLine(jsonObject.optString("line"));
-                    issue.setHash(jsonObject.optString("hash"));
-                    issue.setTextRange_startLine(jsonObject.optString("textRange_startLine"));
-                    issue.setTextRange_endLine(jsonObject.optString("textRange_endLine"));
-                    issue.setTextRange_startOffset(jsonObject.optString("textRange_startOffset"));
-                    issue.setTextRange_endOffset(jsonObject.optString("textRange_endOffset"));
-                    issue.setStatus(jsonObject.optString("status"));
-                    issue.setMessage(jsonObject.optString("message"));
-                    issue.setEffort(jsonObject.optString("effort"));
-                    issue.setDebt(jsonObject.optString("debt"));
-                    issue.setAuthor(jsonObject.optString("author"));
-                    issue.setCreationDate(jsonObject.optString("creationDate"));
-                    issue.setUpdateDate(jsonObject.optString("updateDate"));
-                    issue.setType(jsonObject.optString("type"));
-                    issue.setScope(jsonObject.optString("scope"));
+                issue.setKey(jsonObject.optString("key"));
+                issue.setRule(jsonObject.optString("rule"));
+                issue.setSeverity(jsonObject.optString("severity"));
+                issue.setComponent(jsonObject.optString("component"));
+                issue.setProject(jsonObject.optString("project"));
+                issue.setLine(jsonObject.optString("line"));
+                issue.setHash(jsonObject.optString("hash"));
+                issue.setTextRange_startLine(jsonObject.optString("textRange_startLine"));
+                issue.setTextRange_endLine(jsonObject.optString("textRange_endLine"));
+                issue.setTextRange_startOffset(jsonObject.optString("textRange_startOffset"));
+                issue.setTextRange_endOffset(jsonObject.optString("textRange_endOffset"));
+                issue.setStatus(jsonObject.optString("status"));
+                issue.setMessage(jsonObject.optString("message"));
+                issue.setEffort(jsonObject.optString("effort"));
+                issue.setDebt(jsonObject.optString("debt"));
+                issue.setAuthor(jsonObject.optString("author"));
+                issue.setCreationDate(jsonObject.optString("creationDate"));
+                issue.setUpdateDate(jsonObject.optString("updateDate"));
+                issue.setType(jsonObject.optString("type"));
+                issue.setScope(jsonObject.optString("scope"));
 
-                    listOfIssues.add(issue);
-                });
+                listOfIssues.add(issue);
+            }
+        );
 
-        ProjectScanner.writeCsv(listOfIssues, severity, initialPath);
+        ProjectScanner.writeIssuesCsv(listOfIssues, severity, initialPath);
+    }
+
+    private static void writeHotspotsCsv(ArrayList<Hotspot> listOfHotspots, String initialPath) {
+        try {
+            FileWriter csvFileWriter = new FileWriter(initialPath + "/reports/hotspots.csv");
+
+            String[] csvHeaders = {
+                "key",
+                "component",
+                "project",
+                "securityCategory",
+                "vulnerabilityProbability",
+                "status",
+                "line",
+                "message",
+                "author",
+                "creationDate",
+                "updateDate"
+            };
+
+            String csvHeaderLine = String.join(",", csvHeaders) + System.lineSeparator();
+            csvFileWriter.write(csvHeaderLine);
+
+            String recordsAsCsv =
+                    listOfHotspots.stream()
+                        .map(Hotspot::toCsvRow)
+                        .collect(Collectors.joining(System.lineSeparator()));
+
+            csvFileWriter.write(recordsAsCsv);
+
+            csvFileWriter.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void processJsonArrayOfHotspots(JSONArray hotspots, String initialPath) {
+        ArrayList<Hotspot> listOfHotspots = new ArrayList<>();
+
+        hotspots.forEach(
+            hotspotNode -> {
+                Hotspot hotspot = new Hotspot();
+
+                JSONObject jsonObject = (JSONObject) hotspotNode;
+
+                hotspot.setKey(jsonObject.optString("key"));
+                hotspot.setComponent(jsonObject.optString("component"));
+                hotspot.setProject(jsonObject.optString("project"));
+                hotspot.setSecurityCategory(jsonObject.optString("securityCategory"));
+                hotspot.setVulnerabilityProbability(jsonObject.optString("vulnerabilityProbability"));
+                hotspot.setStatus(jsonObject.optString("status"));
+                hotspot.setLine(jsonObject.optString("line"));
+                hotspot.setMessage(jsonObject.optString("message"));
+                hotspot.setAuthor(jsonObject.optString("author"));
+                hotspot.setCreationDate(jsonObject.optString("creationDate"));
+                hotspot.setUpdateDate(jsonObject.optString("updateDate"));
+
+                listOfHotspots.add(hotspot);
+            }
+        );
+
+        ProjectScanner.writeHotspotsCsv(listOfHotspots, initialPath);
     }
 
     private static void parseReport(String severity, String initialPath, String projectKey) {
@@ -180,7 +242,9 @@ public class ProjectScanner {
 
         JsonNode hotspotsSearchResponseBody = hotspotsSearchResponse.getBody();
 
-        System.out.println(hotspotsSearchResponseBody.toString());
+        JSONArray hotspots = hotspotsSearchResponseBody.getObject().getJSONArray("hotspots");
+
+        ProjectScanner.processJsonArrayOfHotspots(hotspots, initialPath);
     }
 
     public static void main(String[] args) {
