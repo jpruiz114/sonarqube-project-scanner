@@ -38,12 +38,14 @@ public class ProjectScanner {
 
         // Create the user token
 
+        String tokenName = projectName + "_access_token";
+
         JsonResponse createAccessTokenResponse =
                 (JsonResponse)
                         Unirest.post("http://localhost:9000/api/user_tokens/generate")
                                 .header("Content-Type", "application/x-www-form-urlencoded")
                                 .header("Authorization", ProjectScannerConstants.AUTHENTICATION_HEADER_VALUE)
-                                .body("name=admin-access-token")
+                                .body("name=" + tokenName)
                                 .asJson();
 
         int createAccessTokenResponseCode = createAccessTokenResponse.getStatus();
@@ -164,6 +166,23 @@ public class ProjectScanner {
         ProjectScanner.processJsonArrayOfIssues(issues, severity, initialPath);
     }
 
+    private static void getSecurityHotspots(String initialPath, String projectKey) {
+        JsonResponse hotspotsSearchResponse =
+                (JsonResponse)
+                        Unirest.get("http://localhost:9000/api/hotspots/search")
+                                .header("Content-Type", "application/x-www-form-urlencoded")
+                                .header("Authorization", ProjectScannerConstants.AUTHENTICATION_HEADER_VALUE)
+                                .queryString("projectKey", projectKey)
+                                .asJson();
+
+        int hotspotsSearchResponseStatus = hotspotsSearchResponse.getStatus();
+        System.out.println("hotspotsSearchResponseStatus = " + hotspotsSearchResponseStatus);
+
+        JsonNode hotspotsSearchResponseBody = hotspotsSearchResponse.getBody();
+
+        System.out.println(hotspotsSearchResponseBody.toString());
+    }
+
     public static void main(String[] args) {
         String mode = "";
         String initialPath = "";
@@ -188,6 +207,8 @@ public class ProjectScanner {
             ProjectScanner.parseReport("MAJOR", initialPath, projectKey);
             ProjectScanner.parseReport("MINOR", initialPath, projectKey);
             ProjectScanner.parseReport("INFO", initialPath, projectKey);
+
+            ProjectScanner.getSecurityHotspots(initialPath, projectKey);
         }
     }
 }
