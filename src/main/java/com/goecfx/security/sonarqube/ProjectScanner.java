@@ -248,10 +248,10 @@ public class ProjectScanner {
     }
 
     public static void main(String[] args) {
-        String mode = "";
-        String initialPath = "";
-        String projectName = "";
-        String projectKey = "";
+        String mode;
+        String initialPath;
+        String projectName;
+        String projectKey;
 
         mode = args.length > 0 ? args[0] : "";
         initialPath = args.length > 1 ? args[1] : "";
