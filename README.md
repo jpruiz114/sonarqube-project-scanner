@@ -2,11 +2,13 @@
 
 Java application that automates SonarQube project management and security scanning through the SonarQube REST API.
 
+**Requires**: This application runs on top of the [SonarQube Scanner Container](https://github.com/jpruiz114/sonarqube-scanner-container)
+
 ## Prerequisites
 
 - Java 11+
 - Gradle 7.6+
-- Running SonarQube server (via Docker container)
+- Running SonarQube server (via Docker container from [sonarqube-scanner-container](https://github.com/jpruiz114/sonarqube-scanner-container))
 
 ## Build
 
