@@ -93,6 +93,26 @@ java -jar build/libs/fat.jar runScan /path/to/project
 java -jar build/libs/fat.jar parseReport "my-key"
 ```
 
+## Self-Analysis Example
+
+To scan this SonarQube Project Scanner itself:
+
+```bash
+# 1. Mount this project to container workspace
+docker stop sonarqube-scanner && docker rm sonarqube-scanner  
+docker run -d --name sonarqube-scanner \
+  -p 9001:9000 \
+  -v /Users/jruiz/dev/jp/sonarqube-projects/sonarqube-project-scanner:/workspace \
+  jpruiz114/sonarqube-with-sonarscanner
+
+# 2. Wait for SonarQube to start (30-60 seconds)
+
+# 3. Run the workflow
+java -jar build/libs/fat.jar orchestrateScanning /Users/jruiz/dev/jp/sonarqube-projects/sonarqube-project-scanner "SonarQube Project Scanner" "sonar-project-scanner"
+java -jar build/libs/fat.jar runScan /Users/jruiz/dev/jp/sonarqube-projects/sonarqube-project-scanner
+java -jar build/libs/fat.jar parseReport "sonar-project-scanner"
+```
+
 ## Generated Files
 
 - `sq_variables.config` - Project configuration and access token

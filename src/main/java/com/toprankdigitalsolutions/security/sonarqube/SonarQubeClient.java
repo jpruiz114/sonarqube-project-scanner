@@ -21,28 +21,25 @@ public class SonarQubeClient {
     }
     
     /**
-     * Auto-detect SonarQube URL by trying common ports
+     * Auto-detect SonarQube URL - uses port 9001
      */
     private String detectSonarQubeUrl() {
-        // Try port 9001 first, then 9000
-        String[] urls = {"http://localhost:9001", "http://localhost:9000"};
+        String url = "http://localhost:9001";
         
-        for (String url : urls) {
-            try {
-                JsonResponse response = (JsonResponse) Unirest.get(url + "/api/system/status")
-                        .header("Authorization", ProjectScannerConstants.AUTHENTICATION_HEADER_VALUE)
-                        .asJson();
-                if (response.getStatus() == 200) {
-                    System.out.println("✅ SonarQube found at: " + url);
-                    return url;
-                }
-            } catch (Exception e) {
-                // Try next URL
+        try {
+            JsonResponse response = (JsonResponse) Unirest.get(url + "/api/system/status")
+                    .header("Authorization", ProjectScannerConstants.AUTHENTICATION_HEADER_VALUE)
+                    .asJson();
+            if (response.getStatus() == 200) {
+                System.out.println("✅ SonarQube found at: " + url);
+                return url;
             }
+        } catch (Exception e) {
+            // Connection failed
         }
         
-        System.err.println("❌ SonarQube not accessible on ports 9000 or 9001");
-        System.err.println("💡 Make sure the SonarQube container is running");
+        System.err.println("❌ SonarQube not accessible on port 9001");
+        System.err.println("💡 Make sure the SonarQube container is running on port 9001");
         return null;
     }
     

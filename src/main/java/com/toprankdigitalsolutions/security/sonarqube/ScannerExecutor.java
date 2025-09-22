@@ -84,8 +84,16 @@ public class ScannerExecutor {
         command.add("root");
         command.add("-e");
         command.add("SONAR_USER_HOME=/tmp/.sonar");
-        command.add("-w");
-        command.add("/workspace");
+        // Only set working directory if /workspace exists
+        if (directoryExists("/workspace")) {
+            command.add("-w");
+            command.add("/workspace");
+            System.out.println("✅ Using /workspace as working directory");
+        } else {
+            System.err.println("❌ /workspace directory not found in container");
+            System.err.println("💡 Make sure to mount your project: -v /path/to/project:/workspace");
+            return new ArrayList<>(); // Return empty command to fail gracefully
+        }
         command.add("sonarqube-scanner");
         command.add("sonar-scanner");
         command.add("-Dsonar.projectKey=" + projectKey);
@@ -107,7 +115,9 @@ public class ScannerExecutor {
             System.out.println("ℹ️ No compiled classes found, analyzing source only");
         }
         
-        command.add("-Dsonar.host.url=" + client.getBaseUrl().replace("9001", "9000")); // Internal port
+        // Note: Scanner runs inside container via 'docker exec', so it must use internal port 9000
+        // even though external API calls use 9001. This is due to Docker port mapping: -p 9001:9000
+        command.add("-Dsonar.host.url=http://localhost:9000");
         command.add("-Dsonar.token=" + accessToken);
         
         return command;
