@@ -5,3 +5,6 @@ build
 # SonarQube Configuration & Working Files
 sq_variables.config
 .scannerwork/
+
+# Generated Reports (keep directory structure, ignore CSV content)
+reports/**/*.csv

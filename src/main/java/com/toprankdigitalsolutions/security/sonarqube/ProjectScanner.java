@@ -156,28 +156,23 @@ public class ProjectScanner {
             return;
         }
 
-        try {
-            FileWriter variables = new FileWriter(initialPath + "/" + "sq_variables.config");
+        try (FileWriter variables = new FileWriter(initialPath + "/" + "sq_variables.config")) {
             variables.write("SQ_PROJECT_KEY=" + projectKey + System.lineSeparator());
             variables.write("SQ_ACCESS_TOKEN=" + token + System.lineSeparator());
-
-            variables.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private static void writeIssuesCsv(ArrayList<Issue> listOfIssues, String severity, String initialPath) {
+    private static void writeIssuesCsv(ArrayList<Issue> listOfIssues, String severity, String initialPath, String projectKey) {
         try {
-            // Create reports directory if it doesn't exist
-            java.io.File reportsDir = new java.io.File(initialPath + "/reports");
-            if (!reportsDir.exists()) {
-                reportsDir.mkdirs();
-                System.out.println("✅ Created reports directory: " + reportsDir.getAbsolutePath());
+            // Create project-specific reports directory if it doesn't exist
+            java.io.File projectReportsDir = new java.io.File(initialPath + "/reports/" + projectKey);
+            if (!projectReportsDir.exists()) {
+                projectReportsDir.mkdirs();
+                System.out.println("✅ Created project reports directory: " + projectReportsDir.getAbsolutePath());
             }
             
-            FileWriter csvFileWriter = new FileWriter(initialPath + "/reports/" + severity + ".csv");
-
             String[] csvHeaders = {
                 "key",
                 "rule",
@@ -202,22 +197,20 @@ public class ProjectScanner {
             };
 
             String csvHeaderLine = String.join(",", csvHeaders) + System.lineSeparator();
-            csvFileWriter.write(csvHeaderLine);
+            String recordsAsCsv = listOfIssues.stream()
+                    .map(Issue::toCsvRow)
+                    .collect(Collectors.joining(System.lineSeparator()));
 
-            String recordsAsCsv =
-                    listOfIssues.stream()
-                            .map(Issue::toCsvRow)
-                            .collect(Collectors.joining(System.lineSeparator()));
-
-            csvFileWriter.write(recordsAsCsv);
-
-            csvFileWriter.close();
+            try (FileWriter csvFileWriter = new FileWriter(initialPath + "/reports/" + projectKey + "/" + severity + ".csv")) {
+                csvFileWriter.write(csvHeaderLine);
+                csvFileWriter.write(recordsAsCsv);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private static void processJsonArrayOfIssues(JSONArray issues, String severity, String initialPath) {
+    private static void processJsonArrayOfIssues(JSONArray issues, String severity, String initialPath, String projectKey) {
         ArrayList<Issue> listOfIssues = new ArrayList<>();
 
         issues.forEach(
@@ -251,20 +244,18 @@ public class ProjectScanner {
             }
         );
 
-        ProjectScanner.writeIssuesCsv(listOfIssues, severity, initialPath);
+        ProjectScanner.writeIssuesCsv(listOfIssues, severity, initialPath, projectKey);
     }
 
-    private static void writeHotspotsCsv(ArrayList<Hotspot> listOfHotspots, String initialPath) {
+    private static void writeHotspotsCsv(ArrayList<Hotspot> listOfHotspots, String initialPath, String projectKey) {
         try {
-            // Create reports directory if it doesn't exist
-            java.io.File reportsDir = new java.io.File(initialPath + "/reports");
-            if (!reportsDir.exists()) {
-                reportsDir.mkdirs();
-                System.out.println("✅ Created reports directory: " + reportsDir.getAbsolutePath());
+            // Create project-specific reports directory if it doesn't exist
+            java.io.File projectReportsDir = new java.io.File(initialPath + "/reports/" + projectKey);
+            if (!projectReportsDir.exists()) {
+                projectReportsDir.mkdirs();
+                System.out.println("✅ Created project reports directory: " + projectReportsDir.getAbsolutePath());
             }
             
-            FileWriter csvFileWriter = new FileWriter(initialPath + "/reports/hotspots.csv");
-
             String[] csvHeaders = {
                 "key",
                 "component",
@@ -280,22 +271,20 @@ public class ProjectScanner {
             };
 
             String csvHeaderLine = String.join(",", csvHeaders) + System.lineSeparator();
-            csvFileWriter.write(csvHeaderLine);
+            String recordsAsCsv = listOfHotspots.stream()
+                    .map(Hotspot::toCsvRow)
+                    .collect(Collectors.joining(System.lineSeparator()));
 
-            String recordsAsCsv =
-                    listOfHotspots.stream()
-                        .map(Hotspot::toCsvRow)
-                        .collect(Collectors.joining(System.lineSeparator()));
-
-            csvFileWriter.write(recordsAsCsv);
-
-            csvFileWriter.close();
+            try (FileWriter csvFileWriter = new FileWriter(initialPath + "/reports/" + projectKey + "/hotspots.csv")) {
+                csvFileWriter.write(csvHeaderLine);
+                csvFileWriter.write(recordsAsCsv);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private static void processJsonArrayOfHotspots(JSONArray hotspots, String initialPath) {
+    private static void processJsonArrayOfHotspots(JSONArray hotspots, String initialPath, String projectKey) {
         ArrayList<Hotspot> listOfHotspots = new ArrayList<>();
 
         hotspots.forEach(
@@ -320,7 +309,7 @@ public class ProjectScanner {
             }
         );
 
-        ProjectScanner.writeHotspotsCsv(listOfHotspots, initialPath);
+        ProjectScanner.writeHotspotsCsv(listOfHotspots, initialPath, projectKey);
     }
 
     private static String getSonarQubeUrl() {
@@ -384,7 +373,7 @@ public class ProjectScanner {
             JSONArray issues = issuesSearchResponseBody.getObject().getJSONArray("issues");
             
             System.out.println("Found " + issues.length() + " " + severity + " issues");
-            ProjectScanner.processJsonArrayOfIssues(issues, severity, initialPath);
+            ProjectScanner.processJsonArrayOfIssues(issues, severity, initialPath, projectKey);
             
         } catch (Exception e) {
             System.err.println("❌ Error fetching " + severity + " issues: " + e.getMessage());
@@ -421,10 +410,63 @@ public class ProjectScanner {
             JSONArray hotspots = hotspotsSearchResponseBody.getObject().getJSONArray("hotspots");
             
             System.out.println("Found " + hotspots.length() + " security hotspots");
-            ProjectScanner.processJsonArrayOfHotspots(hotspots, initialPath);
+            ProjectScanner.processJsonArrayOfHotspots(hotspots, initialPath, projectKey);
             
         } catch (Exception e) {
             System.err.println("❌ Error fetching security hotspots: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static void listProjects() {
+        String sonarQubeUrl = getSonarQubeUrl();
+        if (sonarQubeUrl == null) {
+            return;
+        }
+        
+        System.out.println("🔍 Fetching all projects from SonarQube...");
+        
+        try {
+            JsonResponse projectsResponse = (JsonResponse) Unirest.get(sonarQubeUrl + "/api/projects/search")
+                    .header("Authorization", ProjectScannerConstants.AUTHENTICATION_HEADER_VALUE)
+                    .queryString("ps", "100") // Get up to 100 projects
+                    .asJson();
+
+            int responseStatus = projectsResponse.getStatus();
+            System.out.println("projectsSearchResponseStatus = " + responseStatus);
+
+            if (responseStatus != 200) {
+                System.err.println("❌ Failed to fetch projects. Response: " + projectsResponse.getBody());
+                return;
+            }
+
+            JsonNode responseBody = projectsResponse.getBody();
+            JSONArray projects = responseBody.getObject().getJSONArray("components");
+            
+            if (projects.length() == 0) {
+                System.out.println("📝 No projects found in SonarQube");
+                return;
+            }
+            
+            System.out.println("\n📋 Found " + projects.length() + " project(s):");
+            System.out.println("=" + "=".repeat(60));
+            System.out.printf("%-30s | %-25s%n", "PROJECT NAME", "PROJECT KEY");
+            System.out.println("-" + "-".repeat(60));
+            
+            for (int i = 0; i < projects.length(); i++) {
+                JSONObject project = projects.getJSONObject(i);
+                String name = project.optString("name", "N/A");
+                String key = project.optString("key", "N/A");
+                System.out.printf("%-30s | %-25s%n", 
+                    name.length() > 30 ? name.substring(0, 27) + "..." : name, 
+                    key.length() > 25 ? key.substring(0, 22) + "..." : key);
+            }
+            
+            System.out.println("=" + "=".repeat(60));
+            System.out.println("✅ Projects listing completed");
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error fetching projects: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -555,28 +597,34 @@ public class ProjectScanner {
         if (mode.equals(ProjectScannerConstants.RUN_SCAN_MODE)) {
             ProjectScanner.runScan(initialPath);
         }
+        
+        if (mode.equals(ProjectScannerConstants.LIST_PROJECTS_MODE)) {
+            ProjectScanner.listProjects();
+        }
 
         if (mode.equals(ProjectScannerConstants.PARSE_REPORT_MODE)) {
-            projectKey = args.length > 2 ? args[2] : "";
+            projectKey = args.length > 1 ? args[1] : "";
             
             if (projectKey.isEmpty()) {
                 System.err.println("❌ Project key is required for parseReport mode");
-                System.err.println("Usage: java -jar fat.jar parseReport <path> <project_key>");
+                System.err.println("Usage: java -jar fat.jar parseReport <project_key>");
                 return;
             }
 
             System.out.println("🔍 Starting report parsing for project: " + projectKey);
-            System.out.println("📁 Reports will be saved to: " + initialPath + "/reports/");
+            System.out.println("📁 Reports will be saved to: ./reports/" + projectKey + "/");
             
-            ProjectScanner.parseReport("BLOCKER", initialPath, projectKey);
-            ProjectScanner.parseReport("CRITICAL", initialPath, projectKey);
-            ProjectScanner.parseReport("MAJOR", initialPath, projectKey);
-            ProjectScanner.parseReport("MINOR", initialPath, projectKey);
-            ProjectScanner.parseReport("INFO", initialPath, projectKey);
+            String currentDir = System.getProperty("user.dir");
+            
+            ProjectScanner.parseReport("BLOCKER", currentDir, projectKey);
+            ProjectScanner.parseReport("CRITICAL", currentDir, projectKey);
+            ProjectScanner.parseReport("MAJOR", currentDir, projectKey);
+            ProjectScanner.parseReport("MINOR", currentDir, projectKey);
+            ProjectScanner.parseReport("INFO", currentDir, projectKey);
 
-            ProjectScanner.getSecurityHotspots(initialPath, projectKey);
+            ProjectScanner.getSecurityHotspots(currentDir, projectKey);
             
-            System.out.println("✅ Report parsing completed! Check " + initialPath + "/reports/ for CSV files");
+            System.out.println("✅ Report parsing completed! Check ./reports/" + projectKey + "/ for CSV files");
         }
     }
 }

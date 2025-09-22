@@ -49,38 +49,54 @@ java -jar build/libs/fat.jar runScan /path/to/your/project
 - Executes sonar-scanner inside Docker container
 - Analyzes source code and uploads results
 
+### LIST PROJECTS Mode
+
+Lists all projects in SonarQube:
+
+```bash
+java -jar build/libs/fat.jar listProjects
+```
+
+**What it does:**
+- Connects to SonarQube server
+- Displays table of all projects with names and keys
+- Helps you find existing project keys for other operations
+
 ### PARSE REPORT Mode
 
 Extracts scan results to CSV files:
 
 ```bash
-java -jar build/libs/fat.jar parseReport /path/to/project "project-key"
+java -jar build/libs/fat.jar parseReport "project-key"
 ```
 
 **What it does:**
 - Downloads issues by severity (BLOCKER, CRITICAL, MAJOR, MINOR, INFO)
 - Downloads security hotspots
-- Exports all data to CSV files in `/reports/` directory
+- Exports all data to CSV files in `/reports/<project-key>/` directory
 
 ## Complete Workflow
 
 ```bash
-# 1. Setup
+# 0. List existing projects (optional)
+java -jar build/libs/fat.jar listProjects
+
+# 1. Setup project and token
 java -jar build/libs/fat.jar orchestrateScanning /path/to/project "My Project" "my-key"
 
-# 2. Scan
+# 2. Run analysis
 java -jar build/libs/fat.jar runScan /path/to/project
 
-# 3. Export
-java -jar build/libs/fat.jar parseReport /path/to/project "my-key"
+# 3. Export results to CSV
+java -jar build/libs/fat.jar parseReport "my-key"
 ```
 
 ## Generated Files
 
 - `sq_variables.config` - Project configuration and access token
-- `reports/BLOCKER.csv` - Critical blocking issues
-- `reports/CRITICAL.csv` - Critical severity issues
-- `reports/MAJOR.csv` - Major severity issues
-- `reports/MINOR.csv` - Minor severity issues
-- `reports/INFO.csv` - Informational issues
-- `reports/hotspots.csv` - Security hotspots
+- `reports/<project-key>/BLOCKER.csv` - Critical blocking issues
+- `reports/<project-key>/CRITICAL.csv` - Critical severity issues
+- `reports/<project-key>/MAJOR.csv` - Major severity issues
+- `reports/<project-key>/MINOR.csv` - Minor severity issues
+- `reports/<project-key>/INFO.csv` - Informational issues
+- `reports/<project-key>/hotspots.csv` - Security hotspots
