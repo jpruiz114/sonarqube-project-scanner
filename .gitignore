@@ -1,0 +1,7 @@
+.gradle
+.idea
+build
+
+# SonarQube Configuration & Working Files
+sq_variables.config
+.scannerwork/

@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+    id("io.ktor.plugin") version "2.2.3"
+    id 'com.github.ben-manes.versions' version '0.52.0'
+}
+
+group 'com.toprankdigitalsolutions.security.sonarqube'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:6.0.0-RC3'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:6.0.0-RC3'
+
+    implementation group: 'com.konghq', name: 'unirest-java-core', version: '4.5.1'
+    implementation group: 'com.konghq', name: 'unirest-object-mappers-gson', version: '4.2.9'
+    implementation group: 'com.konghq', name: 'unirest-objectmapper-jackson', version: '4.2.9'
+
+    compileOnly 'org.projectlombok:lombok:1.18.42'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
+}
+
+application {
+    mainClass.set("com.toprankdigitalsolutions.security.sonarqube.ProjectScanner")
+}
+
+ktor {
+    fatJar {
+        archiveFileName.set("fat.jar")
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
